@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class UserHandler {
     private final UserService userService;
-    private static final Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     public UserHandler(UserService userService) {
         this.userService = userService;

@@ -21,7 +21,9 @@ public class GameService {
 
     public int createGame(String authToken, String gameName) throws DataAccessException, UnauthorizedException {
         AuthData auth = authDAO.getAuth(authToken);
-        if (auth == null) throw new UnauthorizedException("Invalid auth token");
+        if (auth == null) {
+            throw new UnauthorizedException("Invalid auth token");
+        }
         return gameDAO.createGame(gameName);
     }
 
@@ -37,11 +39,15 @@ public class GameService {
         String username = auth.username();
         switch (color.toUpperCase()) {
             case "BLACK":
-                if (game.blackUsername() != null) throw new AlreadyTakenException("Team color already taken");
+                if (game.blackUsername() != null) {
+                    throw new AlreadyTakenException("Team color already taken");
+                }
                 gameDAO.updateGame(gameID, new GameData(gameID, game.whiteUsername(), username, game.gameName(), game.game()));
                 break;
             case "WHITE":
-                if (game.whiteUsername() != null) throw new AlreadyTakenException("Team color already taken");
+                if (game.whiteUsername() != null) {
+                    throw new AlreadyTakenException("Team color already taken");
+                }
                 gameDAO.updateGame(gameID, new GameData(gameID, username, game.blackUsername(), game.gameName(), game.game()));
                 break;
             default:

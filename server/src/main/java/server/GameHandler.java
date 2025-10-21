@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class GameHandler {
     private final GameService gameService;
-    private static final Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     public GameHandler(GameService gameService) {
         this.gameService = gameService;
