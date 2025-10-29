@@ -5,9 +5,9 @@ import dataaccess.*;
 import service.*;
 
 public class Server {
-    private final UserDAO userDAO = new MemoryUserDAO();
-    private final AuthDAO authDAO = new MemoryAuthDAO();
-    private final GameDAO gameDAO = new MemoryGameDAO();
+    private final UserDAO userDAO = new SQLUserDAO();
+    private final AuthDAO authDAO = new SQLAuthDAO();
+    private final GameDAO gameDAO = new SQLGameDAO();
 
     private final UserService userService = new UserService(userDAO, authDAO);
     private final GameService gameService = new GameService(gameDAO, authDAO);

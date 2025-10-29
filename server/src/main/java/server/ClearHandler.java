@@ -1,5 +1,6 @@
 package server;
 
+import dataaccess.DataAccessException;
 import io.javalin.http.Context;
 import service.GameService;
 import service.UserService;
@@ -13,7 +14,7 @@ public class ClearHandler {
         this.gameService = gameService;
     }
 
-    public void handle(Context ctx) {
+    public void handle(Context ctx) throws DataAccessException {
         userService.clear();
         gameService.clear();
         ctx.status(200);

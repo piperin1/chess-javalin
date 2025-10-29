@@ -3,21 +3,24 @@ import model.UserData;
 import java.sql.SQLException;
 
 public class SQLUserDAO implements UserDAO {
-    public SQLUserDAO () throws Exception {
-        DatabaseManager.createDatabase();
-        try (var conn = DatabaseManager.getConnection();
-            var table = conn.prepareStatement("""
-                       CREATE TABLE IF NOT EXISTS users (
-                           username VARCHAR(255) NOT NULL PRIMARY KEY,
-                           password VARCHAR(255) NOT NULL,
-                           email VARCHAR(255) NOT NULL
-                   )"""
-            )) {
-            table.executeUpdate();
-        } catch (Exception e) {
-            throw new Exception(e);
+    public SQLUserDAO() {
+        try {
+            DatabaseManager.createDatabase();
+            try (var conn = DatabaseManager.getConnection();
+                 var table = conn.prepareStatement("""
+                     CREATE TABLE IF NOT EXISTS users (
+                         username VARCHAR(255) NOT NULL PRIMARY KEY,
+                         password VARCHAR(255) NOT NULL,
+                         email VARCHAR(255) NOT NULL
+                     )
+                     """)) {
+                table.executeUpdate();
+            }
+        } catch (DataAccessException | SQLException e) {
+            throw new RuntimeException("Failed to initialize SQLUserDAO", e);
         }
     }
+
 
     @Override
     public void createUser(UserData userData) throws DataAccessException {

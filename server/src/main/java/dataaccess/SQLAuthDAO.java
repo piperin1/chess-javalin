@@ -4,18 +4,20 @@ import java.sql.SQLException;
 
 public class SQLAuthDAO implements AuthDAO{
 
-    public SQLAuthDAO() throws Exception {
-        DatabaseManager.createDatabase();
-        try (var conn = DatabaseManager.getConnection();
-             var table = conn.prepareStatement("""
-                       CREATE TABLE IF NOT EXISTS auth (
-                           username VARCHAR(255) NOT NULL UNIQUE,
-                           authToken VARCHAR(255) NOT NULL PRIMARY KEY
-                   )"""
-             )) {
-            table.executeUpdate();
-        } catch (Exception e) {
-            throw new Exception(e);
+    public SQLAuthDAO() {
+        try {
+            DatabaseManager.createDatabase();
+            try (var conn = DatabaseManager.getConnection();
+                 var table = conn.prepareStatement("""
+                     CREATE TABLE IF NOT EXISTS auth (
+                         username VARCHAR(255) NOT NULL UNIQUE,
+                         authToken VARCHAR(255) NOT NULL PRIMARY KEY
+                     )
+                     """)) {
+                table.executeUpdate();
+            }
+        } catch (DataAccessException | SQLException e) {
+            throw new RuntimeException("Failed to initialize SQLAuthDAO", e);
         }
     }
 

@@ -9,21 +9,23 @@ import chess.ChessGame;
 public class SQLGameDAO implements GameDAO {
     private final Gson gson = new Gson();
 
-    public SQLGameDAO() throws Exception {
-        DatabaseManager.createDatabase();
-        try (var conn = DatabaseManager.getConnection();
-             var table = conn.prepareStatement("""
-                         CREATE TABLE IF NOT EXISTS games (
-                             gameID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                             whiteUsername VARCHAR(255),
-                             blackUsername VARCHAR(255),
-                             gameName VARCHAR(255),
-                             gameState TEXT
-                     )"""
-             )) {
-            table.executeUpdate();
-        } catch (Exception e) {
-            throw new Exception(e);
+    public SQLGameDAO() {
+        try {
+            DatabaseManager.createDatabase();
+            try (var conn = DatabaseManager.getConnection();
+                 var table = conn.prepareStatement("""
+                     CREATE TABLE IF NOT EXISTS games (
+                         gameID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                         whiteUsername VARCHAR(255),
+                         blackUsername VARCHAR(255),
+                         gameName VARCHAR(255),
+                         gameState TEXT
+                     )
+                     """)) {
+                table.executeUpdate();
+            }
+        } catch (DataAccessException | SQLException e) {
+            throw new RuntimeException("Failed to initialize SQLGameDAO", e);
         }
     }
 
