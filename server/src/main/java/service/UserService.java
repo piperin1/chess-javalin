@@ -2,6 +2,8 @@ package service;
 import dataaccess.*;
 import model.UserData;
 import model.AuthData;
+import org.mindrot.jbcrypt.BCrypt;
+
 import java.util.UUID;
 
 
@@ -26,17 +28,17 @@ public class UserService {
     }
 
     public AuthData login(UserData user) throws DataAccessException, UnauthorizedException {
-            var existingUser = userDAO.getUser(user.username());
-            if (existingUser == null) {
-                throw new UnauthorizedException("User does not exist");
-            }
-            if (!existingUser.password().equals(user.password())) {
-                throw new UnauthorizedException("Invalid password");
-            }
-            String authToken = UUID.randomUUID().toString();
-            AuthData auth = new AuthData(authToken,user.username());
-            authDAO.createAuth(auth);
-            return auth;
+        var existingUser = userDAO.getUser(user.username());
+        if (existingUser == null) {
+            throw new UnauthorizedException("User does not exist");
+        }
+        if (!BCrypt.checkpw(user.password(), existingUser.password())) {
+            throw new UnauthorizedException("Invalid password");
+        }
+        String authToken = UUID.randomUUID().toString();
+        AuthData auth = new AuthData(authToken, user.username());
+        authDAO.createAuth(auth);
+        return auth;
     }
 
     public void logout(String authToken) throws DataAccessException, UnauthorizedException {
