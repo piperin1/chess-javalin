@@ -18,7 +18,7 @@ public class SQLGameDAO implements GameDAO {
                          gameID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                          whiteUsername VARCHAR(255),
                          blackUsername VARCHAR(255),
-                         gameName VARCHAR(255),
+                         gameName VARCHAR(255) NOT NULL,
                          gameState TEXT
                      )
                      """)) {
@@ -86,11 +86,15 @@ public class SQLGameDAO implements GameDAO {
             stmt.setString(3, game.gameName());
             stmt.setString(4, gson.toJson(game.game()));
             stmt.setInt(5, gameID);
-            stmt.executeUpdate();
-        } catch (DataAccessException | SQLException e) {
+            int rowsUpdated = stmt.executeUpdate();
+            if (rowsUpdated == 0) {
+                throw new DataAccessException("No game found with ID: " + gameID);
+            }
+        } catch (SQLException | DataAccessException e) {
             throw new DataAccessException("Error updating game", e);
         }
     }
+
 
     @Override
     public Map<Integer,GameData> listGames() throws DataAccessException {
