@@ -14,11 +14,17 @@ public class ClearHandler {
         this.gameService = gameService;
     }
 
-    public void handle(Context ctx) throws DataAccessException {
-        userService.clear();
-        gameService.clear();
-        ctx.status(200);
-        ctx.result(""); // Empty body
+    public void handle(Context ctx) {
+        try {
+            userService.clear();
+            gameService.clear();
+            ctx.status(200);
+            ctx.result("");
+        } catch (DataAccessException e) {
+            ctx.status(500);
+            ctx.result("Error clearing database: " + e.getMessage());
+        }
     }
+
 }
 

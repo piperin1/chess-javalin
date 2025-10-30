@@ -48,7 +48,7 @@ public class SQLGameDAO implements GameDAO {
                     throw new DataAccessException("Failed to retrieve game ID");
                 }
             }
-        } catch (SQLException e) {
+        } catch (DataAccessException | SQLException e) {
             throw new DataAccessException("Error creating game", e);
         }
     }
@@ -71,7 +71,7 @@ public class SQLGameDAO implements GameDAO {
                     throw new DataAccessException("Game not found");
                 }
             }
-        } catch (SQLException e) {
+        } catch (DataAccessException | SQLException e) {
             throw new DataAccessException("Error retrieving game", e);
         }
     }
@@ -87,7 +87,7 @@ public class SQLGameDAO implements GameDAO {
             stmt.setString(4, gson.toJson(game.game()));
             stmt.setInt(5, gameID);
             stmt.executeUpdate();
-        } catch (SQLException e) {
+        } catch (DataAccessException | SQLException e) {
             throw new DataAccessException("Error updating game", e);
         }
     }
@@ -108,7 +108,7 @@ public class SQLGameDAO implements GameDAO {
                 var chessGame = gson.fromJson(json, ChessGame.class);
                 games.put(id, new GameData(id, white, black, name, chessGame));
             }
-        } catch (SQLException e) {
+        } catch (DataAccessException | SQLException e) {
             throw new DataAccessException("Error listing games", e);
         }
         return games;
@@ -116,7 +116,7 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public void clear() throws DataAccessException {
-        var sql = "DELETE FROM games";
+        var sql = "TRUNCATE games";
         try (var conn = DatabaseManager.getConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.executeUpdate();

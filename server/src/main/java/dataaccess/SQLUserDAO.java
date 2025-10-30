@@ -36,7 +36,7 @@ public class SQLUserDAO implements UserDAO {
             stmt.setString(2, hashedPassword);
             stmt.setString(3, userData.email());
             stmt.executeUpdate();
-        } catch (SQLException e) {
+        } catch (DataAccessException | SQLException e) {
             throw new DataAccessException("Error inserting user", e);
         }
     }
@@ -57,14 +57,14 @@ public class SQLUserDAO implements UserDAO {
                 }
                 return null;
             }
-        } catch (SQLException e) {
+        } catch (DataAccessException | SQLException e) {
             throw new DataAccessException("Error fetching user", e);
         }
     }
 
     @Override
     public void clear() throws DataAccessException {
-        var sql = "DELETE FROM users";
+        var sql = "TRUNCATE users";
         try (var conn = DatabaseManager.getConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.executeUpdate();

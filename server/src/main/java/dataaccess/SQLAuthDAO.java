@@ -10,7 +10,7 @@ public class SQLAuthDAO implements AuthDAO{
             try (var conn = DatabaseManager.getConnection();
                  var table = conn.prepareStatement("""
                      CREATE TABLE IF NOT EXISTS auth (
-                         username VARCHAR(255) NOT NULL UNIQUE,
+                         username VARCHAR(255) NOT NULL,
                          authToken VARCHAR(255) NOT NULL PRIMARY KEY
                      )
                      """)) {
@@ -29,7 +29,7 @@ public class SQLAuthDAO implements AuthDAO{
             stmt.setString(1, authData.username());
             stmt.setString(2, authData.authToken());
             stmt.executeUpdate();
-        } catch(SQLException e) {
+        } catch(DataAccessException | SQLException e) {
             throw new DataAccessException("Error inserting auth data", e);
         }
     }
@@ -49,7 +49,7 @@ public class SQLAuthDAO implements AuthDAO{
                 }
                 return null;
             }
-        } catch (SQLException e) {
+        } catch (DataAccessException | SQLException e) {
             throw new DataAccessException("Error fetching authToken", e);
         }
     }
@@ -61,14 +61,14 @@ public class SQLAuthDAO implements AuthDAO{
              var stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, token);
             stmt.executeUpdate();
-        } catch (SQLException e) {
+        } catch (DataAccessException | SQLException e) {
             throw new DataAccessException("Error deleting auth token", e);
         }
     }
 
     @Override
     public void clear() throws DataAccessException {
-        var sql = "DELETE FROM auth";
+        var sql = "TRUNCATE auth";
         try (var conn = DatabaseManager.getConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.executeUpdate();
