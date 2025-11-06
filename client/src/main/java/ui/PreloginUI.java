@@ -18,14 +18,34 @@ public class PreloginUI {
     }
 
     public void printHelp() {
-        //PRINT AVAIL COMMANDS
+        System.out.println("""
+            Available commands:
+             - REGISTER: Create a new account
+             - LOGIN: Log into an existing account
+             - HELP: Show this message
+             - QUIT: Exit the program
+        """);
     }
 
     private String handleRegister() throws Exception {
-        //COLLECT USERNAME + PASSWORD, RETURN AUTHTOKEN
+        System.out.print("Username: ");
+        var username = scanner.nextLine();
+        System.out.print("Password: ");
+        var password = scanner.nextLine();
+        System.out.print("Email: ");
+        var email = scanner.nextLine();
+        var auth = server.register(username, password, email);
+        System.out.println("Registered and logged in as " + username);
+        return auth.authToken();
     }
 
     private String handleLogin() throws Exception {
-        //COLLECT USERNAME + PASSWORD, RETURN AUTHTOKEN
+        System.out.print("Username: ");
+        var username = scanner.nextLine();
+        System.out.print("Password: ");
+        var password = scanner.nextLine();
+        var auth = server.login(username, password);
+        System.out.println("Logged in as " + username);
+        return auth.authToken();
     }
 }
