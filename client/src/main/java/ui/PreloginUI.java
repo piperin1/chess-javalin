@@ -14,7 +14,26 @@ public class PreloginUI {
     }
 
     public String handleInput() {
-       //ADD COMMANDS BEFORE LOGIN
+        System.out.print(" REGISTER | LOGIN | HELP | QUIT ");
+        var input = scanner.nextLine().trim().toLowerCase();
+        try {
+            return switch (input) {
+                case "register" -> handleRegister();
+                case "login" -> handleLogin();
+                case "help" -> {
+                    printHelp();
+                    yield null; }
+                case "quit" -> {
+                    System.exit(0);
+                    yield null; }
+                default -> {
+                    System.out.println("Invalid command. Type HELP.");
+                    yield null; }
+            };
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+            return null;
+        }
     }
 
     public void printHelp() {
