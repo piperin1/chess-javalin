@@ -38,22 +38,35 @@ public class ServerFacade {
     public List<GameData> listGames(String authToken) throws IOException {
         var response = makeRequest("GET", "/game", null, Map.class, authToken);
         var gamesJson = gson.toJson(response.get("games"));
-        return List.of(gson.fromJson(gamesJson, GameData[].class));
+        GameData[] games = gson.fromJson(gamesJson, GameData[].class);
+        return List.of(games);
+    }
+
+    public void joinGame(String authToken, int gameID, String playerColor) throws IOException {
+        var body = gson.toJson(Map.of(
+                "playerColor", playerColor, // can be "WHITE", "BLACK", or null for observer
+                "gameID", gameID
+        ));
+        makeRequest("PUT", "/game", body, null, authToken);
     }
 
     private <T> T makeRequest(String method, String path, String body, Class<T> responseType, String authToken) throws IOException {
         var url = new URL(baseURL + path);
         var conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod(method);
-        conn.setDoOutput(true);
+        conn.setRequestProperty("Content-Type", "application/json");
         if (authToken != null) {
             conn.setRequestProperty("Authorization", authToken);
-            try (var out = conn.getOutputStream()) {
-                out.write(body.getBytes());
+        }
+        if (body != null && (method.equals("POST") || method.equals("PUT"))) {
+            conn.setDoOutput(true);
+            try (var out = new OutputStreamWriter(conn.getOutputStream())) {
+                out.write(body);
             }
         }
-        if (conn.getResponseCode() != 200) {
-            throw new IOException("Server returned: "  + conn.getResponseCode());
+        int status = conn.getResponseCode();
+        if (status != 200) {
+            throw new IOException("Server returned: " + conn.getResponseCode());
         }
         if (responseType == null) {
             return null;
