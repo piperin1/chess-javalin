@@ -38,9 +38,6 @@ public class BoardDrawer {
     private void printHelp() {
         System.out.println("""
         Commands:
-         move <pos> <pos>     - make a move
-         select <pos>      - select a square
-         resign         - resign the game
          exit           - return to menu
          help           - show this help
     """);

@@ -121,7 +121,8 @@ public class PostloginUI {
             }
             server.joinGame(authToken, gameID, color);
         } else {
-            server.joinGame(authToken, gameID, null);
+            server.joinGame(authToken, gameID,"EMPTY");
+            chosenColor = ChessGame.TeamColor.WHITE;
         }
         System.out.println("Joined game successfully.");
         GameData gameData = games.get(index);

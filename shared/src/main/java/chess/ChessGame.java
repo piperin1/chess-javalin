@@ -41,7 +41,8 @@ public class ChessGame {
      */
     public enum TeamColor {
         WHITE,
-        BLACK
+        BLACK,
+        EMPTY
     }
 
     /**

@@ -50,6 +50,9 @@ public class GameService {
                 }
                 gameDAO.updateGame(gameID, new GameData(gameID, username, game.blackUsername(), game.gameName(), game.game()));
                 break;
+
+            case "EMPTY":
+                break;
             default:
                 throw new IllegalArgumentException("Invalid color; must be WHITE or BLACK");
         }
