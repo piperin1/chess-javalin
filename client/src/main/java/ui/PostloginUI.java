@@ -96,7 +96,6 @@ public class PostloginUI {
             System.out.println("You must list games first.");
             return;
         }
-
         System.out.print("Enter game number: ");
         int index;
         try {
@@ -105,7 +104,6 @@ public class PostloginUI {
             System.out.println("Please enter a valid number.");
             return;
         }
-
         if (index < 0 || index >= games.size()) {
             System.out.println("Invalid game number.");
             return;
