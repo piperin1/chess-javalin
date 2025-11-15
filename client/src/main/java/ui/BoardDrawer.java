@@ -21,20 +21,15 @@ public class BoardDrawer {
     public void run(ChessGame.TeamColor pov) {
         this.pov = pov;
         this.selected = null;
-
         boolean inGame = true;
-
         while (inGame) {
             printBoard(pov, selected);
             printHelp();
-
             String cmd = scanner.nextLine().trim().toLowerCase();
 
             switch (cmd) {
                 case "exit" -> inGame = false;
-
                 case "help" -> printHelp();
-
                 default -> System.out.println("This function has not yet been implemented");
             }
         }
