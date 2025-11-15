@@ -1,10 +1,7 @@
 package ui;
 
 import chess.*;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
+import java.util.Scanner;
 import static java.lang.System.out;
 import static ui.EscapeSequences.*;
 
@@ -12,9 +9,46 @@ public class BoardDrawer {
     private ChessGame game;
     private static final String LIGHT_SQUARE = SET_BG_COLOR_LIGHT_GREY;
     private static final String DARK_SQUARE = SET_BG_COLOR_MAGENTA;
+    private ChessGame.TeamColor pov;
+    private ChessPosition selected;
+    private final Scanner scanner = new Scanner(System.in);
+
 
     public BoardDrawer(ChessGame game) {
         this.game = game;
+    }
+
+    public void run(ChessGame.TeamColor pov) {
+        this.pov = pov;
+        this.selected = null;
+
+        boolean inGame = true;
+
+        while (inGame) {
+            printBoard(pov, selected);
+            printHelp();
+
+            String cmd = scanner.nextLine().trim().toLowerCase();
+
+            switch (cmd) {
+                case "exit" -> inGame = false;
+
+                case "help" -> printHelp();
+
+                default -> System.out.println("This function has not yet been implemented");
+            }
+        }
+    }
+
+    private void printHelp() {
+        System.out.println("""
+        Commands:
+         move <pos> <pos>     - make a move
+         select <pos>      - select a square
+         resign         - resign the game
+         exit           - return to menu
+         help           - show this help
+    """);
     }
 
     public void printBoard(ChessGame.TeamColor color, ChessPosition selectedPos) {

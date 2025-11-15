@@ -66,7 +66,21 @@ public class ServerFacade {
         }
         int status = conn.getResponseCode();
         if (status != 200) {
-            throw new IOException("Server returned: " + conn.getResponseCode());
+            InputStream errorStream = conn.getErrorStream();
+            String errorMessage = "Unknown error";
+
+            if (errorStream != null) {
+                try (var reader = new InputStreamReader(errorStream)) {
+                    Map errJson = gson.fromJson(reader, Map.class);
+                    if (errJson != null && errJson.get("message") != null) {
+                        errorMessage = (String) errJson.get("message");
+                    }
+                }
+            }
+            if (errorMessage.startsWith("Error:")) {
+                errorMessage = errorMessage.substring("Error:".length()).trim();
+            }
+            throw new IOException(errorMessage);
         }
         if (responseType == null) {
             return null;
