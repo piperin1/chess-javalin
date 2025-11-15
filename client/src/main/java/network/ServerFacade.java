@@ -50,6 +50,10 @@ public class ServerFacade {
         makeRequest("PUT", "/game", body, null, authToken);
     }
 
+    public void clear() throws IOException {
+        makeRequest("DELETE", "/db", null, null, null);
+    }
+
     private <T> T makeRequest(String method, String path, String body, Class<T> responseType, String authToken) throws IOException {
         var url = new URL(baseURL + path);
         var conn = (HttpURLConnection) url.openConnection();
