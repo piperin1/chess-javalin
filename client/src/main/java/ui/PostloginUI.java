@@ -1,5 +1,6 @@
 package ui;
 
+import chess.ChessGame;
 import model.GameData;
 import network.ServerFacade;
 
@@ -109,11 +110,17 @@ public class PostloginUI {
             System.out.println("Invalid game number.");
             return;
         }
-
+        ChessGame.TeamColor chosenColor = null;
         int gameID = games.get(index).gameID();
         if (!observer) {
             System.out.print("Join as (WHITE/BLACK): ");
             String color = scanner.nextLine().trim().toUpperCase();
+            if (color.contains("WHITE")) {
+                chosenColor = ChessGame.TeamColor.WHITE;
+            }
+            else if (color.contains("BLACK")) {
+                chosenColor = ChessGame.TeamColor.BLACK;
+            }
             server.joinGame(authToken, gameID, color);
         } else {
             server.joinGame(authToken, gameID, null);
@@ -121,6 +128,6 @@ public class PostloginUI {
         System.out.println("Joined game successfully.");
         GameData gameData = games.get(index);
         var chessGame = gameData.game();
-        new BoardDrawer(chessGame).printBoard(null, null);
+        new BoardDrawer(chessGame).run(chosenColor);
     }
 }
