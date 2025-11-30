@@ -58,6 +58,23 @@ public class GameService {
         }
     }
 
+    public GameData getGame(String authToken, int gameID)
+            throws DataAccessException, UnauthorizedException {
+
+        AuthData auth = authDAO.getAuth(authToken);
+        if (auth == null) {
+            throw new UnauthorizedException("Invalid or expired auth token");
+        }
+
+        GameData game = gameDAO.getGame(gameID);
+        if (game == null) {
+            throw new DataAccessException("Game not found");
+        }
+
+        return game;
+    }
+
+
     public void clear() throws DataAccessException {
         gameDAO.clear();
     }

@@ -49,6 +49,15 @@ public class UserService {
             authDAO.deleteAuth(authToken);
     }
 
+    public AuthData authenticate(String authToken) throws UnauthorizedException, DataAccessException {
+        AuthData auth = authDAO.getAuth(authToken);
+        if (auth == null) {
+            throw new UnauthorizedException("Invalid or expired auth token");
+        }
+        return auth;
+    }
+
+
     public void clear() throws DataAccessException {
         userDAO.clear();
         authDAO.clear();
