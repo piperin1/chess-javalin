@@ -49,7 +49,25 @@ public class WebsocketHandler {
     }
 
     @OnClose
-    public void onClose(Session session){}
+    public void onClose(Session session) {
+        Integer gameID = sessionToGameID.remove(session);
+        String username = sessionToUsername.remove(session);
+
+        if (gameID != null) {
+            Set<Session> sessions = gameSessions.get(gameID);
+            if (sessions != null) {
+                sessions.remove(session);
+
+                if (username != null) {
+                    broadcast(
+                            gameID,
+                            new NotificationMessage(username + " disconnected"),
+                            session
+                    );
+                }
+            }
+        }
+    }
 
     @OnError
     public void onError(Session session, Throwable error){}
@@ -88,15 +106,73 @@ public class WebsocketHandler {
 
 
     public void handleMakeMove(UserGameCommand command, Session session) {
+        try {
+            Integer gameID = sessionToGameID.get(session);
+            if (gameID == null) {
+                send(session, new ErrorMessage("Error: Not connected to a game"));
+                return;
+            }
 
+            String username = sessionToUsername.get(session);
+            userService.authenticate(command.getAuthToken());
+
+            // gameService.makeMove(command.getAuthToken(), gameID, command.getMove());
+
+            GameData updatedGame =
+                    gameService.getGame(command.getAuthToken(), gameID);
+            broadcast(gameID, new LoadGameMessage(updatedGame.game()), null);
+            broadcast(
+                    gameID,
+                    new NotificationMessage(username + " made a move"),
+                    session
+            );
+
+        } catch (UnauthorizedException e) {
+            send(session, new ErrorMessage("Error: " + e.getMessage()));
+        } catch (Exception e) {
+            send(session, new ErrorMessage("Error: Invalid move"));
+        }
     }
 
     public void handleLeave(UserGameCommand command, Session session) {
-
+        Integer gameID = sessionToGameID.remove(session);
+        String username = sessionToUsername.remove(session);
+        if (gameID == null) {
+            return;
+        }
+        Set<Session> sessions = gameSessions.get(gameID);
+        if (sessions != null) {
+            sessions.remove(session);
+        }
+        broadcast(
+                gameID,
+                new NotificationMessage(username + " left the game"),
+                session
+        );
     }
 
     public void handleResign(UserGameCommand command, Session session) {
+        try {
+            Integer gameID = sessionToGameID.get(session);
+            String username = sessionToUsername.get(session);
 
+            if (gameID == null) {
+                send(session, new ErrorMessage("Error: Not connected to a game"));
+                return;
+            }
+            userService.authenticate(command.getAuthToken());
+            
+            // gameService.resignGame(command.getAuthToken(), gameID);
+
+            broadcast(
+                    gameID,
+                    new NotificationMessage(username + " resigned the game"),
+                    null
+            );
+
+        } catch (UnauthorizedException | DataAccessException e ) {
+            send(session, new ErrorMessage("Error: " + e.getMessage()));
+        }
     }
 
     private void send(Session session, ServerMessage message) {
@@ -121,8 +197,5 @@ public class WebsocketHandler {
         }
         return username + " is observing the game";
     }
-
-
-
 
 }
