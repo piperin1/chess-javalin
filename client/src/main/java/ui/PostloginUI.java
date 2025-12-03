@@ -2,13 +2,17 @@ package ui;
 
 import chess.ChessGame;
 import model.GameData;
+import network.HttpCommunicator;
 import network.ServerFacade;
+import network.WebsocketCommunicator;
 
 import java.util.List;
 import java.util.Scanner;
 
 public class PostloginUI {
-    private final ServerFacade server;
+    HttpCommunicator http;
+    WebsocketCommunicator websocket;
+
     private final Scanner scanner;
     private final String authToken;
     private List<GameData> games = List.of();
