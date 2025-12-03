@@ -1,4 +1,7 @@
 package service;
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.InvalidMoveException;
 import dataaccess.*;
 import model.*;
 import java.util.Map;
@@ -74,6 +77,87 @@ public class GameService {
         return game;
     }
 
+    public void makeMove(String authToken, int gameID, ChessMove move)
+            throws DataAccessException, UnauthorizedException, InvalidMoveException {
+
+        AuthData auth = authDAO.getAuth(authToken);
+        if (auth == null) {
+            throw new UnauthorizedException("Invalid or expired auth token");
+        }
+
+        GameData gameData = gameDAO.getGame(gameID);
+        if (gameData == null) {
+            throw new DataAccessException("Game not found");
+        }
+
+        String username = auth.username();
+        ChessGame game = gameData.game();
+        boolean isWhite = username.equals(gameData.whiteUsername());
+        boolean isBlack = username.equals(gameData.blackUsername());
+
+        if (!isWhite && !isBlack) {
+            throw new UnauthorizedException("Observers may not make moves");
+        }
+
+        if (game.getTeamTurn() == ChessGame.TeamColor.WHITE && !isWhite) {
+            throw new UnauthorizedException("Not your turn");
+        }
+        if (game.getTeamTurn() == ChessGame.TeamColor.BLACK && !isBlack) {
+            throw new UnauthorizedException("Not your turn");
+        }
+
+        game.makeMove(move);
+
+        gameDAO.updateGame(
+                gameID,
+                new GameData(
+                        gameID,
+                        gameData.whiteUsername(),
+                        gameData.blackUsername(),
+                        gameData.gameName(),
+                        game
+                )
+        );
+    }
+
+    public void resignGame(String authToken, int gameID)
+            throws DataAccessException, UnauthorizedException {
+
+        AuthData auth = authDAO.getAuth(authToken);
+        if (auth == null) {
+            throw new UnauthorizedException("Invalid or expired auth token");
+        }
+        GameData gameData = gameDAO.getGame(gameID);
+        if (gameData == null) {
+            throw new DataAccessException("Game not found");
+        }
+
+        String username = auth.username();
+        ChessGame game = gameData.game();
+        boolean isWhite = username.equals(gameData.whiteUsername());
+        boolean isBlack = username.equals(gameData.blackUsername());
+
+        if (!isWhite && !isBlack) {
+            throw new UnauthorizedException("Observers may not resign");
+        }
+
+        if (game.isGameOver()) {
+            throw new IllegalStateException("Game already ended");
+        }
+
+        game.setGameOver(true);
+
+        gameDAO.updateGame(
+                gameID,
+                new GameData(
+                        gameID,
+                        gameData.whiteUsername(),
+                        gameData.blackUsername(),
+                        gameData.gameName(),
+                        game
+                )
+        );
+    }
 
     public void clear() throws DataAccessException {
         gameDAO.clear();

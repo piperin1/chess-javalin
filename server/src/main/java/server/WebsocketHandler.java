@@ -6,7 +6,7 @@ import jakarta.websocket.server.*;
 import model.*;
 import service.GameService;
 import service.UserService;
-import websocket.commands.UserGameCommand;
+import websocket.commands.*;
 import websocket.messages.*;
 import java.awt.*;
 import java.util.Map;
@@ -37,14 +37,30 @@ public class WebsocketHandler {
     }
 
     @OnMessage
-    public void onMessage(String message, Session session){
-        UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
+    public void onMessage(String message, Session session) {
+        UserGameCommand base = gson.fromJson(message, UserGameCommand.class);
 
-        switch (command.getCommandType()) {
-            case CONNECT -> handleConnect(command, session);
-            case MAKE_MOVE -> handleMakeMove(command, session);
-            case LEAVE -> handleLeave(command, session);
-            case RESIGN -> handleResign(command, session);
+        switch (base.getCommandType()) {
+            case CONNECT -> {
+                ConnectCommand cmd =
+                        gson.fromJson(message, ConnectCommand.class);
+                        handleConnect(cmd, session);
+            }
+            case MAKE_MOVE -> {
+                MakeMoveCommand cmd =
+                        gson.fromJson(message, MakeMoveCommand.class);
+                        handleMakeMove(cmd, session);
+            }
+            case LEAVE -> {
+                LeaveCommand cmd =
+                        gson.fromJson(message, LeaveCommand.class);
+                        handleLeave(cmd, session);
+            }
+            case RESIGN -> {
+                ResignCommand cmd =
+                        gson.fromJson(message, ResignCommand.class);
+                        handleResign(cmd, session);
+            }
         }
     }
 
@@ -52,12 +68,10 @@ public class WebsocketHandler {
     public void onClose(Session session) {
         Integer gameID = sessionToGameID.remove(session);
         String username = sessionToUsername.remove(session);
-
         if (gameID != null) {
             Set<Session> sessions = gameSessions.get(gameID);
             if (sessions != null) {
                 sessions.remove(session);
-
                 if (username != null) {
                     broadcast(
                             gameID,
@@ -72,7 +86,7 @@ public class WebsocketHandler {
     @OnError
     public void onError(Session session, Throwable error){}
 
-    public void handleConnect(UserGameCommand command, Session session) {
+    public void handleConnect(ConnectCommand command, Session session) {
         try {
             AuthData auth = userService.authenticate(command.getAuthToken());
             String username = auth.username();
@@ -82,14 +96,11 @@ public class WebsocketHandler {
                 send(session, new ErrorMessage("Error: Game not found"));
                 return;
             }
-
             sessionToUsername.put(session, username);
             sessionToGameID.put(session, command.getGameID());
             gameSessions
                     .computeIfAbsent(command.getGameID(), k -> ConcurrentHashMap.newKeySet())
                     .add(session);
-
-
             send(session, new LoadGameMessage(game.game()));
             broadcast(
                     command.getGameID(),
@@ -105,7 +116,7 @@ public class WebsocketHandler {
     }
 
 
-    public void handleMakeMove(UserGameCommand command, Session session) {
+    public void handleMakeMove(MakeMoveCommand command, Session session) {
         try {
             Integer gameID = sessionToGameID.get(session);
             if (gameID == null) {
@@ -115,9 +126,7 @@ public class WebsocketHandler {
 
             String username = sessionToUsername.get(session);
             userService.authenticate(command.getAuthToken());
-
-            // gameService.makeMove(command.getAuthToken(), gameID, command.getMove());
-
+            gameService.makeMove(command.getAuthToken(), gameID, command.getMove());
             GameData updatedGame =
                     gameService.getGame(command.getAuthToken(), gameID);
             broadcast(gameID, new LoadGameMessage(updatedGame.game()), null);
@@ -134,7 +143,7 @@ public class WebsocketHandler {
         }
     }
 
-    public void handleLeave(UserGameCommand command, Session session) {
+    public void handleLeave(LeaveCommand command, Session session) {
         Integer gameID = sessionToGameID.remove(session);
         String username = sessionToUsername.remove(session);
         if (gameID == null) {
@@ -151,7 +160,7 @@ public class WebsocketHandler {
         );
     }
 
-    public void handleResign(UserGameCommand command, Session session) {
+    public void handleResign(ResignCommand command, Session session) {
         try {
             Integer gameID = sessionToGameID.get(session);
             String username = sessionToUsername.get(session);
@@ -161,9 +170,7 @@ public class WebsocketHandler {
                 return;
             }
             userService.authenticate(command.getAuthToken());
-            
-            // gameService.resignGame(command.getAuthToken(), gameID);
-
+            gameService.resignGame(command.getAuthToken(), gameID);
             broadcast(
                     gameID,
                     new NotificationMessage(username + " resigned the game"),

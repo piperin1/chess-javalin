@@ -13,11 +13,24 @@ import java.util.Objects;
 public class ChessGame {
     private TeamColor teamTurn;
     private ChessBoard board;
+    private boolean gameOver;
 
     public ChessGame() {
         board = new ChessBoard();
         board.resetBoard();
         teamTurn = TeamColor.WHITE;
+        gameOver = false;
+    }
+
+    public void setGameOver(boolean isGameOver) {
+        gameOver = isGameOver;
+    }
+
+    public boolean isGameOver(){
+        if (isInCheckmate(TeamColor.WHITE) || isInCheckmate(TeamColor.BLACK)) {
+            gameOver = true;
+        }
+        return gameOver;
     }
 
     /**
