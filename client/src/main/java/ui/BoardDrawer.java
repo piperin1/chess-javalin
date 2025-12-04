@@ -43,7 +43,6 @@ public class BoardDrawer {
     private String printBoardRow(int row, boolean reversed, ChessPosition selected ) {
         StringBuilder sb = new StringBuilder();
         sb.append(SET_BG_COLOR_BLACK).append(SET_TEXT_COLOR_BLUE).append(" %d ".formatted(row));
-
         for (int i = 1; i <= 8; i++) {
             int col = reversed ? 9 - i : i;
             sb.append(getSquareColor(row, col, selected))
@@ -52,7 +51,6 @@ public class BoardDrawer {
         sb.append(SET_BG_COLOR_BLACK).append(SET_TEXT_COLOR_BLUE)
                 .append(" %d ".formatted(row))
                 .append(RESET_BG_COLOR).append(RESET_TEXT_COLOR).append("\n");
-
         return sb.toString();
     }
 
@@ -63,7 +61,6 @@ public class BoardDrawer {
         }
         String colorCode = (piece.getTeamColor() == ChessGame.TeamColor.WHITE)
                 ? SET_TEXT_COLOR_WHITE : SET_TEXT_COLOR_BLACK;
-
         String type = switch (piece.getPieceType()) {
             case KING -> " K ";
             case QUEEN -> " Q ";
@@ -72,7 +69,6 @@ public class BoardDrawer {
             case KNIGHT -> " N ";
             case PAWN -> " P ";
         };
-
         return colorCode + type;
     }
 

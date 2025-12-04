@@ -1,12 +1,9 @@
 package ui;
 
 import chess.ChessGame;
-import com.google.gson.Gson;
 import model.GameData;
 import network.HttpCommunicator;
 import network.WebsocketCommunicator;
-import websocket.commands.ConnectCommand;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -70,7 +67,6 @@ public class PostloginUI {
             System.out.println("No games available.");
             return;
         }
-
         for (int i = 0; i < games.size(); i++) {
             GameData g = games.get(i);
             System.out.printf("%d. %s | White: %s | Black: %s%n",
@@ -88,7 +84,6 @@ public class PostloginUI {
             System.out.println("Game name cannot be empty.");
             return;
         }
-
         int gameID = http.createGame(name);
         if (gameID < 0) {
             System.out.println("Failed to create game.");

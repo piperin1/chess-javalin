@@ -19,7 +19,6 @@ public class WebsocketHandler {
     private final UserService userService;
     private final GameService gameService;
     private final Gson gson = new Gson();
-
     private final Map<Integer, Set<WsContext>> gameSessions = new ConcurrentHashMap<>();
     private final Map<WsContext, String> sessionToUsername = new ConcurrentHashMap<>();
     private final Map<WsContext, Integer> sessionToGameID = new ConcurrentHashMap<>();
@@ -32,9 +31,8 @@ public class WebsocketHandler {
     public void register(Javalin javalin) {
         javalin.ws("/ws", ws -> {
             ws.onMessage((ctx) -> {
-                String message = ctx.message(); // Extract raw text
+                String message = ctx.message();
                 UserGameCommand base = gson.fromJson(message, UserGameCommand.class);
-
                 try {
                     switch (base.getCommandType()) {
                         case CONNECT -> handleConnect(gson.fromJson(message, ConnectCommand.class), ctx);
@@ -61,10 +59,11 @@ public class WebsocketHandler {
                 }
             });
 
-            ws.onError((throwable) -> {
-                System.out.println("WebSocket error: " + throwable.getMessage());
+            ws.onError(ctx -> {
+                Throwable t = ctx.error();
+                System.out.println("WebSocket error: " +
+                        (t == null ? "unknown" : t.getMessage()));
             });
-
         });
     }
 
@@ -72,21 +71,16 @@ public class WebsocketHandler {
         try {
             AuthData auth = userService.authenticate(command.getAuthToken());
             String username = auth.username();
-
             GameData game = gameService.getGame(command.getAuthToken(), command.getGameID());
             if (game == null) {
                 send(ctx, new ErrorMessage("Error: Game not found"));
                 return;
             }
-
             sessionToUsername.put(ctx, username);
             sessionToGameID.put(ctx, command.getGameID());
-            gameSessions.computeIfAbsent(command.getGameID(), k -> ConcurrentHashMap.newKeySet())
-                    .add(ctx);
-
+            gameSessions.computeIfAbsent(command.getGameID(), k -> ConcurrentHashMap.newKeySet()).add(ctx);
             send(ctx, new LoadGameMessage(game.game()));
             broadcast(command.getGameID(), new NotificationMessage(buildJoinMessage(username, game)), ctx);
-
         } catch (UnauthorizedException e) {
             send(ctx, new ErrorMessage("Error: " + e.getMessage()));
         } catch (Exception e) {
@@ -101,15 +95,12 @@ public class WebsocketHandler {
                 send(ctx, new ErrorMessage("Error: Not connected to a game"));
                 return;
             }
-
             String username = sessionToUsername.get(ctx);
             userService.authenticate(command.getAuthToken());
             gameService.makeMove(command.getAuthToken(), gameID, command.getMove());
             GameData updatedGame = gameService.getGame(command.getAuthToken(), gameID);
-
             broadcast(gameID, new LoadGameMessage(updatedGame.game()), null);
             broadcast(gameID, new NotificationMessage(username + " made a move"), ctx);
-
         } catch (UnauthorizedException e) {
             send(ctx, new ErrorMessage("Error: " + e.getMessage()));
         } catch (Exception e) {
@@ -120,9 +111,7 @@ public class WebsocketHandler {
     private void handleLeave(LeaveCommand command, WsContext ctx) {
         Integer gameID = sessionToGameID.remove(ctx);
         String username = sessionToUsername.remove(ctx);
-
         if (gameID == null) return;
-
         Set<WsContext> sessions = gameSessions.get(gameID);
         if (sessions != null) {
             sessions.remove(ctx);
@@ -134,16 +123,13 @@ public class WebsocketHandler {
         try {
             Integer gameID = sessionToGameID.get(ctx);
             String username = sessionToUsername.get(ctx);
-
             if (gameID == null) {
                 send(ctx, new ErrorMessage("Error: Not connected to a game"));
                 return;
             }
-
             userService.authenticate(command.getAuthToken());
             gameService.resignGame(command.getAuthToken(), gameID);
             broadcast(gameID, new NotificationMessage(username + " resigned the game"), null);
-
         } catch (UnauthorizedException | DataAccessException e) {
             send(ctx, new ErrorMessage("Error: " + e.getMessage()));
         }

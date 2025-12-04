@@ -16,10 +16,8 @@ public class WebsocketCommunicator {
 
     private Session session;
     private final Gson gson = new Gson();
-
     private Consumer<ChessGame> onGame;
     private Consumer<String> onMessage;
-
     private final String authToken;
     private final int gameID;
 
@@ -49,7 +47,6 @@ public class WebsocketCommunicator {
     public void onMessage(String message) {
         ServerMessage base =
                 gson.fromJson(message, ServerMessage.class);
-
         switch (base.getServerMessageType()) {
             case LOAD_GAME -> {
                 var lg = gson.fromJson(message, LoadGameMessage.class);

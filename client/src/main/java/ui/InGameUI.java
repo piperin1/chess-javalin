@@ -65,18 +65,14 @@ public class InGameUI {
             case "move" -> {
                 try {
                     ChessMove move = parseMove(input);
-                    websocket.send(gson.toJson(
-                            new MakeMoveCommand(authToken, gameID, move)));
+                    websocket.send(gson.toJson(new MakeMoveCommand(authToken, gameID, move)));
                 } catch (IllegalArgumentException e) {
                     System.out.println(e.getMessage());
                 }
             }
-            case "resign" -> websocket.send(
-                    gson.toJson(new ResignCommand(authToken, gameID))
-            );
+            case "resign" -> websocket.send(gson.toJson(new ResignCommand(authToken, gameID)));
             case "leave" -> {
-                websocket.send(
-                        gson.toJson(new LeaveCommand(authToken, gameID)));
+                websocket.send(gson.toJson(new LeaveCommand(authToken, gameID)));
                 running = false;
             }
             case "help" -> printHelp();

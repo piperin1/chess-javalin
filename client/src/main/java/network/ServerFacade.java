@@ -44,8 +44,7 @@ public class ServerFacade {
 
     public void joinGame(String authToken, int gameID, String playerColor) throws IOException {
         var body = gson.toJson(Map.of(
-                "playerColor", playerColor, // can be "WHITE", "BLACK", or null for observer
-                "gameID", gameID
+                "playerColor", playerColor,"gameID", gameID
         ));
         makeRequest("PUT", "/game", body, null, authToken);
     }
@@ -72,7 +71,6 @@ public class ServerFacade {
         if (status != 200) {
             InputStream errorStream = conn.getErrorStream();
             String errorMessage = "Unknown error";
-
             if (errorStream != null) {
                 try (var reader = new InputStreamReader(errorStream)) {
                     Map errJson = gson.fromJson(reader, Map.class);
