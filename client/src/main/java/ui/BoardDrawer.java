@@ -1,7 +1,6 @@
 package ui;
 
 import chess.*;
-import java.util.Scanner;
 import static java.lang.System.out;
 import static ui.EscapeSequences.*;
 
@@ -9,41 +8,13 @@ public class BoardDrawer {
     private ChessGame game;
     private static final String LIGHT_SQUARE = SET_BG_COLOR_LIGHT_GREY;
     private static final String DARK_SQUARE = SET_BG_COLOR_MAGENTA;
-    private ChessGame.TeamColor pov;
-    private ChessPosition selected;
-    private final Scanner scanner = new Scanner(System.in);
 
+    public void draw(ChessGame game, ChessGame.TeamColor pov) {
+        printBoard(game, pov, null);
+    }
 
-    public BoardDrawer(ChessGame game) {
+    public void printBoard(ChessGame game, ChessGame.TeamColor color, ChessPosition selectedPos) {
         this.game = game;
-    }
-
-    public void run(ChessGame.TeamColor pov) {
-        this.pov = pov;
-        this.selected = null;
-        boolean inGame = true;
-        while (inGame) {
-            printBoard(pov, selected);
-            printHelp();
-            String cmd = scanner.nextLine().trim().toLowerCase();
-
-            switch (cmd) {
-                case "exit" -> inGame = false;
-                case "help" -> printHelp();
-                default -> System.out.println("This function has not yet been implemented");
-            }
-        }
-    }
-
-    private void printHelp() {
-        System.out.println("""
-        Commands:
-         exit           - return to menu
-         help           - show this help
-    """);
-    }
-
-    public void printBoard(ChessGame.TeamColor color, ChessPosition selectedPos) {
         var sb = new StringBuilder(SET_TEXT_BOLD);
         boolean reversed = (color == ChessGame.TeamColor.BLACK);
         sb.append(printHeaderRow(reversed));
