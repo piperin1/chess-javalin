@@ -28,12 +28,10 @@ public class WebsocketCommunicator {
             String authToken,
             int gameID
     ) throws Exception {
-
         this.authToken = authToken;
         this.gameID = gameID;
 
         URI uri = new URI(serverUrl);
-        System.out.println("Attempting to connect to websocket using: " + uri);
         WebSocketContainer container =
                 ContainerProvider.getWebSocketContainer();
 
@@ -43,8 +41,6 @@ public class WebsocketCommunicator {
     @OnOpen
     public void onOpen(Session session) {
         this.session = session;
-        System.out.println("WebSocket connected");
-
         send(gson.toJson(
                 new ConnectCommand(authToken, gameID)));
     }
@@ -68,7 +64,6 @@ public class WebsocketCommunicator {
     @OnError
     public void onError(Session session, Throwable t) {
         System.out.println("WebSocket error: " + t.getMessage());
-        t.printStackTrace();
     }
 
     @OnClose

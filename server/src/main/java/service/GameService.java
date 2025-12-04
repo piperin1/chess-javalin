@@ -1,7 +1,5 @@
 package service;
-import chess.ChessGame;
-import chess.ChessMove;
-import chess.InvalidMoveException;
+import chess.*;
 import dataaccess.*;
 import model.*;
 import java.util.Map;
