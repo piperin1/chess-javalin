@@ -1,19 +1,18 @@
 package ui;
 
-import network.ServerFacade;
-
+import network.HttpCommunicator;
 import java.util.Scanner;
 
 public class PreloginUI {
     private final Scanner scanner;
-    private final ServerFacade server;
+    private final HttpCommunicator http;
 
-    public PreloginUI(Scanner scanner, ServerFacade server) {
+    public PreloginUI(Scanner scanner, HttpCommunicator http) {
         this.scanner = scanner;
-        this.server = server;
+        this.http = http;
     }
 
-    public String handleInput() {
+    public boolean handleInput() {
         System.out.print(" REGISTER | LOGIN | HELP | QUIT ");
         var input = scanner.nextLine().trim().toLowerCase();
         try {
@@ -22,17 +21,17 @@ public class PreloginUI {
                 case "login" -> handleLogin();
                 case "help" -> {
                     printHelp();
-                    yield null; }
+                    yield false; }
                 case "quit" -> {
                     System.exit(0);
-                    yield null; }
+                    yield false; }
                 default -> {
                     System.out.println("Invalid command. Type HELP.");
-                    yield null; }
+                    yield false; }
             };
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
-            return null;
+            return false;
         }
     }
 
@@ -46,25 +45,31 @@ public class PreloginUI {
         """);
     }
 
-    private String handleRegister() throws Exception {
+    private boolean handleRegister() {
         System.out.print("Username: ");
         var username = scanner.nextLine();
         System.out.print("Password: ");
         var password = scanner.nextLine();
         System.out.print("Email: ");
         var email = scanner.nextLine();
-        var auth = server.register(username, password, email);
-        System.out.println("Registered and logged in as " + username);
-        return auth.authToken();
+        if (http.register(username, password, email)) {
+            System.out.println("Registered and logged in.");
+            return true;
+        }
+        System.out.println("Register failed.");
+        return false;
     }
 
-    private String handleLogin() throws Exception {
+    private boolean handleLogin() {
         System.out.print("Username: ");
         var username = scanner.nextLine();
         System.out.print("Password: ");
         var password = scanner.nextLine();
-        var auth = server.login(username, password);
-        System.out.println("Logged in as " + username);
-        return auth.authToken();
+        if (http.login(username, password)) {
+            System.out.println("Logged in.");
+            return true;
+        }
+        System.out.println("Login failed.");
+        return false;
     }
 }

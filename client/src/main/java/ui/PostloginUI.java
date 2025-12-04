@@ -4,7 +4,6 @@ import chess.ChessGame;
 import com.google.gson.Gson;
 import model.GameData;
 import network.HttpCommunicator;
-import network.ServerFacade;
 import network.WebsocketCommunicator;
 import websocket.commands.ConnectCommand;
 
@@ -133,17 +132,13 @@ public class PostloginUI {
             }
         } else {
             http.joinGame(gameID, "EMPTY");
-            pov = ChessGame.TeamColor.WHITE; // default POV for observers
+            pov = ChessGame.TeamColor.WHITE;
         }
         System.out.println("Joined game successfully.");
 
         try {
             WebsocketCommunicator websocket =
-                    new WebsocketCommunicator("localhost:8080");
-
-            websocket.send(new Gson().toJson(
-                    new ConnectCommand(http.getAuthToken(), gameID)));
-
+                    new WebsocketCommunicator("ws://localhost:8080/connect", http.getAuthToken(), gameID);
             InGameUI inGameUI =
                     new InGameUI(scanner, websocket, gameID, http.getAuthToken(), pov);
 

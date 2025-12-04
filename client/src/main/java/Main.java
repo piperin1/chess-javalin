@@ -1,4 +1,5 @@
 import chess.*;
+import network.HttpCommunicator;
 import network.ServerFacade;
 import ui.PostloginUI;
 import ui.PreloginUI;
@@ -7,15 +8,20 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        var server = new ServerFacade("http://localhost:8080");
-        var scanner = new Scanner(System.in);
-        var preloginUI = new PreloginUI(scanner, server);
+        Scanner scanner = new Scanner(System.in);
+
+        ServerFacade server = new ServerFacade("http://localhost:8080");
+        HttpCommunicator http = new HttpCommunicator(server);
+
+        PreloginUI preloginUI = new PreloginUI(scanner, http);
 
         while (true) {
-            String authToken = preloginUI.handleInput();
-            if (authToken != null) {
-                new PostloginUI(scanner, server, authToken).run();
+            if (preloginUI.handleInput()) {
+                new PostloginUI(scanner, http).run();
             }
         }
     }
+
 }
+
+
