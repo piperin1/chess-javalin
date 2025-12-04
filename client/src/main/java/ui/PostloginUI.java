@@ -138,7 +138,7 @@ public class PostloginUI {
 
         try {
             WebsocketCommunicator websocket =
-                    new WebsocketCommunicator("ws://localhost:8080/connect", http.getAuthToken(), gameID);
+                    new WebsocketCommunicator("ws://localhost:8080/ws", http.getAuthToken(), gameID);
             InGameUI inGameUI =
                     new InGameUI(scanner, websocket, gameID, http.getAuthToken(), pov);
 

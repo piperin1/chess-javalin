@@ -20,6 +20,9 @@ public class Server {
 
     public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("/web"));
+        WebsocketHandler websocketHandler = new WebsocketHandler(userService, gameService);
+        websocketHandler.register(javalin);
+
 
         // Register routes here
         javalin.delete("/db", clearHandler::handle);
