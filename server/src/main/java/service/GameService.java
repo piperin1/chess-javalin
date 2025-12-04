@@ -96,12 +96,14 @@ public class GameService {
         if (!isWhite && !isBlack) {
             throw new UnauthorizedException("Observers may not make moves");
         }
-
         if (game.getTeamTurn() == ChessGame.TeamColor.WHITE && !isWhite) {
             throw new UnauthorizedException("Not your turn");
         }
         if (game.getTeamTurn() == ChessGame.TeamColor.BLACK && !isBlack) {
             throw new UnauthorizedException("Not your turn");
+        }
+        if (gameData.game().isGameOver()) {
+            throw new InvalidMoveException("Game is already over");
         }
 
         game.makeMove(move);

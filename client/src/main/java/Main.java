@@ -1,4 +1,3 @@
-import chess.*;
 import network.HttpCommunicator;
 import network.ServerFacade;
 import ui.PostloginUI;
