@@ -1,12 +1,9 @@
 package ui;
 
-import chess.ChessGame;
-import chess.ChessMove;
+import chess.*;
 import com.google.gson.Gson;
 import network.WebsocketCommunicator;
-import websocket.commands.LeaveCommand;
-import websocket.commands.MakeMoveCommand;
-import websocket.commands.ResignCommand;
+import websocket.commands.*;
 
 import java.util.Scanner;
 
@@ -20,7 +17,7 @@ public class InGameUI {
     private final int gameID;
     private final String authToken;
     private boolean running;
-    
+
     public InGameUI(
             Scanner scanner,
             WebsocketCommunicator websocket,
@@ -42,7 +39,7 @@ public class InGameUI {
         running = true;
         while (running) {
             System.out.print("[IN-GAME] >>> ");
-            String input = scanner.nextLine().trim();
+            String input = scanner.nextLine().trim().toLowerCase();
             handleInput(input);
         }
     }
@@ -54,7 +51,9 @@ public class InGameUI {
     }
 
     private void clearScreen() {
-        System.out.flush();
+        for (int i = 0; i < 50; i++) {
+            System.out.println();
+        }
     }
 
     private void onNotification(String message) {
@@ -64,10 +63,13 @@ public class InGameUI {
     private void handleInput(String input) {
         switch (input.split(" ")[0]) {
             case "move" -> {
-                ChessMove move = parseMove(input); //Add parsemove
-                MakeMoveCommand cmd =
-                        new MakeMoveCommand(authToken, gameID, move);
-                websocket.send(gson.toJson(cmd));
+                try {
+                    ChessMove move = parseMove(input);
+                    websocket.send(gson.toJson(
+                            new MakeMoveCommand(authToken, gameID, move)));
+                } catch (IllegalArgumentException e) {
+                    System.out.println(e.getMessage());
+                }
             }
             case "resign" -> websocket.send(
                     gson.toJson(new ResignCommand(authToken, gameID))
@@ -78,9 +80,48 @@ public class InGameUI {
                 running = false;
             }
             case "help" -> printHelp();
-
             default -> System.out.println("Unknown command. Type HELP.");
         }
+    }
+
+    private ChessMove parseMove(String input) {
+        String[] parts = input.trim().toLowerCase().split("\\s+");
+        if (parts.length < 3 || parts.length > 4) {
+            throw new IllegalArgumentException(
+                    "Usage: move <from> <to> [promotion]");
+        }
+        ChessPosition from = parsePosition(parts[1]);
+        ChessPosition to = parsePosition(parts[2]);
+        ChessPiece.PieceType promo = null;
+        if (parts.length == 4) {
+            promo = parsePromotion(parts[3]);
+        }
+        return new ChessMove(from, to, promo);
+    }
+
+    private ChessPosition parsePosition(String pos) {
+        if (pos.length() != 2) {
+            throw new IllegalArgumentException("Invalid square: " + pos);
+        }
+        char file = pos.charAt(0);
+        char rank = pos.charAt(1);
+        if (file < 'a' || file > 'h' || rank < '1' || rank > '8') {
+            throw new IllegalArgumentException("Invalid square: " + pos);
+        }
+        int col = file - 'a' + 1;
+        int row = rank - '0';
+        return new ChessPosition(row, col);
+    }
+
+    private ChessPiece.PieceType parsePromotion(String p) {
+        return switch (p) {
+            case "q" -> ChessPiece.PieceType.QUEEN;
+            case "r" -> ChessPiece.PieceType.ROOK;
+            case "b" -> ChessPiece.PieceType.BISHOP;
+            case "n" -> ChessPiece.PieceType.KNIGHT;
+            default -> throw new IllegalArgumentException(
+                    "Invalid promotion piece: " + p);
+        };
     }
 
     public void printHelp(){
@@ -92,7 +133,5 @@ public class InGameUI {
           help
     """);
     }
-
-
 }
 

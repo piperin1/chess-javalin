@@ -1,26 +1,25 @@
 package ui;
 
 import chess.ChessGame;
+import com.google.gson.Gson;
 import model.GameData;
 import network.HttpCommunicator;
 import network.ServerFacade;
 import network.WebsocketCommunicator;
+import websocket.commands.ConnectCommand;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class PostloginUI {
-    HttpCommunicator http;
-    WebsocketCommunicator websocket;
-
     private final Scanner scanner;
-    private final String authToken;
+    private final HttpCommunicator http;
     private List<GameData> games = List.of();
 
-    public PostloginUI(Scanner scanner, ServerFacade server, String authToken) {
-        this.server = server;
-        this.authToken = authToken;
+    public PostloginUI(Scanner scanner, HttpCommunicator http) {
         this.scanner = scanner;
+        this.http = http;
     }
 
     public void run() {
@@ -34,23 +33,21 @@ public class PostloginUI {
             System.out.println("5. Logout");
             System.out.println("6. Help");
             System.out.print("> ");
+
             String choice = scanner.nextLine().trim();
-            try {
-                switch (choice) {
-                    case "1" -> listGames();
-                    case "2" -> createGame();
-                    case "3" -> joinGame(false);
-                    case "4" -> joinGame(true);
-                    case "5" -> {
-                        server.logout(authToken);
-                        System.out.println("You have been logged out.");
-                        running = false;
-                    }
-                    case "6" -> printHelp();
-                    default -> System.out.println("Invalid option. Type '6' for help.");
+
+            switch (choice) {
+                case "1" -> listGames();
+                case "2" -> createGame();
+                case "3" -> joinGame(false);
+                case "4" -> joinGame(true);
+                case "5" -> {
+                    http.logout();
+                    System.out.println("You have been logged out.");
+                    running = false;
                 }
-            } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
+                case "6" -> printHelp();
+                default -> System.out.println("Invalid option. Type '6' for help.");
             }
         }
     }
@@ -63,39 +60,45 @@ public class PostloginUI {
              3. Join a game as a player
              4. Observe a game
              5. Logout
-             6. Help - show this menu
+             6. Help
         """);
     }
 
-    private void listGames() throws Exception {
-        games = server.listGames(authToken);
+    private void listGames() {
+        games = new ArrayList<>(http.listGames());
         System.out.println("\n--- Current Games ---");
         if (games.isEmpty()) {
             System.out.println("No games available.");
-        } else {
-            for (int i = 0; i < games.size(); i++) {
-                GameData g = games.get(i);
-                System.out.printf("%d. %s | White: %s | Black: %s%n",
-                        i + 1,
-                        g.gameName(),
-                        g.whiteUsername() == null ? "(open)" : g.whiteUsername(),
-                        g.blackUsername() == null ? "(open)" : g.blackUsername());
-            }
+            return;
+        }
+
+        for (int i = 0; i < games.size(); i++) {
+            GameData g = games.get(i);
+            System.out.printf("%d. %s | White: %s | Black: %s%n",
+                    i + 1,
+                    g.gameName(),
+                    g.whiteUsername() == null ? "(open)" : g.whiteUsername(),
+                    g.blackUsername() == null ? "(open)" : g.blackUsername());
         }
     }
 
-    private void createGame() throws Exception {
+    private void createGame() {
         System.out.print("Enter game name: ");
         String name = scanner.nextLine().trim();
         if (name.isEmpty()) {
             System.out.println("Game name cannot be empty.");
             return;
         }
-        int gameID = server.createGame(authToken, name);
-        System.out.println("Game created successfully: " + name);
+
+        int gameID = http.createGame(name);
+        if (gameID < 0) {
+            System.out.println("Failed to create game.");
+            return;
+        }
+        System.out.println("Game created successfully.");
     }
 
-    private void joinGame(boolean observer) throws Exception {
+    private void joinGame(boolean observer) {
         if (games.isEmpty()) {
             System.out.println("You must list games first.");
             return;
@@ -105,32 +108,48 @@ public class PostloginUI {
         try {
             index = Integer.parseInt(scanner.nextLine()) - 1;
         } catch (Exception e) {
-            System.out.println("Please enter a valid number.");
+            System.out.println("Invalid number.");
             return;
         }
         if (index < 0 || index >= games.size()) {
             System.out.println("Invalid game number.");
             return;
         }
-        ChessGame.TeamColor chosenColor = null;
-        int gameID = games.get(index).gameID();
+        GameData game = games.get(index);
+        int gameID = game.gameID();
+        ChessGame.TeamColor pov;
+
         if (!observer) {
             System.out.print("Join as (WHITE/BLACK): ");
-            String color = scanner.nextLine().trim().toUpperCase();
-            if (color.contains("WHITE")) {
-                chosenColor = ChessGame.TeamColor.WHITE;
+            String colorStr = scanner.nextLine().trim().toUpperCase();
+            if (!colorStr.equals("WHITE") && !colorStr.equals("BLACK")) {
+                System.out.println("Invalid color.");
+                return;
             }
-            else if (color.contains("BLACK")) {
-                chosenColor = ChessGame.TeamColor.BLACK;
+            pov = ChessGame.TeamColor.valueOf(colorStr);
+            if (!http.joinGame(gameID, colorStr)) {
+                System.out.println("Failed to join game.");
+                return;
             }
-            server.joinGame(authToken, gameID, color);
         } else {
-            server.joinGame(authToken, gameID,"EMPTY");
-            chosenColor = ChessGame.TeamColor.WHITE;
+            http.joinGame(gameID, "EMPTY");
+            pov = ChessGame.TeamColor.WHITE; // default POV for observers
         }
         System.out.println("Joined game successfully.");
-        GameData gameData = games.get(index);
-        var chessGame = gameData.game();
-        new BoardDrawer(chessGame).run(chosenColor);
+
+        try {
+            WebsocketCommunicator websocket =
+                    new WebsocketCommunicator("localhost:8080");
+
+            websocket.send(new Gson().toJson(
+                    new ConnectCommand(http.getAuthToken(), gameID)));
+
+            InGameUI inGameUI =
+                    new InGameUI(scanner, websocket, gameID, http.getAuthToken(), pov);
+
+            inGameUI.run();
+        } catch (Exception e) {
+            System.out.println("Failed to connect to game.");
+        }
     }
 }
