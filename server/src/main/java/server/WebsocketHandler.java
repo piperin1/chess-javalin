@@ -42,6 +42,8 @@ public class WebsocketHandler {
                     }
                 } catch (Exception e) {
                     send(ctx, new ErrorMessage("Error: " + e.getMessage()));
+                } catch (UnauthorizedException e) {
+                    throw new RuntimeException(e);
                 }
             });
 
@@ -108,13 +110,26 @@ public class WebsocketHandler {
         }
     }
 
-    private void handleLeave(LeaveCommand command, WsContext ctx) {
+    private void handleLeave(LeaveCommand command, WsContext ctx) throws UnauthorizedException, DataAccessException {
         Integer gameID = sessionToGameID.remove(ctx);
         String username = sessionToUsername.remove(ctx);
         if (gameID == null) return;
         Set<WsContext> sessions = gameSessions.get(gameID);
         if (sessions != null) {
             sessions.remove(ctx);
+        }
+        GameData game = gameService.getGameWithoutAuth(gameID);
+        boolean updated = false;
+        if (game.whiteUsername() != null && game.whiteUsername().equals(username)) {
+            game = new GameData(gameID, null, game.blackUsername(), game.gameName(), game.game());
+            updated = true;
+        }
+        if (game.blackUsername() != null && game.blackUsername().equals(username)) {
+            game = new GameData(gameID, game.whiteUsername(), null, game.gameName(), game.game());
+            updated = true;
+        }
+        if (updated) {
+            gameService.updateGameWithoutAuth(gameID, game);
         }
         broadcast(gameID, new NotificationMessage(username + " left the game"), ctx);
     }

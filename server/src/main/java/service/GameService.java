@@ -38,20 +38,21 @@ public class GameService {
             throw new DataAccessException("Game not found");
         }
         String username = auth.username();
+        System.out.println("Slot BLACK: '" + game.blackUsername() + "', attempting user: '" + username + "'");
+        System.out.println("Slot WHITE: '" + game.whiteUsername() + "', attempting user: '" + username + "'");
         switch (color.toUpperCase()) {
             case "BLACK":
-                if (game.blackUsername() != null) {
+                if (game.blackUsername() != null && !game.blackUsername().trim().equalsIgnoreCase(username.trim())) {
                     throw new AlreadyTakenException("Team color already taken");
                 }
                 gameDAO.updateGame(gameID, new GameData(gameID, game.whiteUsername(), username, game.gameName(), game.game()));
                 break;
             case "WHITE":
-                if (game.whiteUsername() != null) {
+                if (game.whiteUsername() != null && !game.whiteUsername().trim().equalsIgnoreCase(username.trim())) {
                     throw new AlreadyTakenException("Team color already taken");
                 }
                 gameDAO.updateGame(gameID, new GameData(gameID, username, game.blackUsername(), game.gameName(), game.game()));
                 break;
-
             case "EMPTY":
                 break;
             default:
@@ -161,6 +162,18 @@ public class GameService {
 
     public void clear() throws DataAccessException {
         gameDAO.clear();
+    }
+
+    public void updateGameWithoutAuth(int gameID, GameData game) throws DataAccessException {
+        gameDAO.updateGame(gameID, game);
+    }
+
+    public GameData getGameWithoutAuth(int gameID) throws DataAccessException {
+        GameData game = gameDAO.getGame(gameID);
+        if (game == null) {
+            throw new DataAccessException("Game not found");
+        }
+        return game;
     }
 
 
