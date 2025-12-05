@@ -3,9 +3,7 @@ package network;
 import chess.ChessGame;
 import com.google.gson.Gson;
 import websocket.commands.ConnectCommand;
-import websocket.messages.LoadGameMessage;
-import websocket.messages.MessageText;
-import websocket.messages.ServerMessage;
+import websocket.messages.*;
 import jakarta.websocket.*;
 
 import java.net.URI;
@@ -45,19 +43,23 @@ public class WebsocketCommunicator {
 
     @OnMessage
     public void onMessage(String message) {
-        ServerMessage base =
-                gson.fromJson(message, ServerMessage.class);
+        ServerMessage base = gson.fromJson(message, ServerMessage.class);
         switch (base.getServerMessageType()) {
             case LOAD_GAME -> {
-                var lg = gson.fromJson(message, LoadGameMessage.class);
+                LoadGameMessage lg = gson.fromJson(message, LoadGameMessage.class);
                 if (onGame != null) onGame.accept(lg.getGame());
             }
-            case ERROR, NOTIFICATION -> {
-                var msg = gson.fromJson(message, MessageText.class);
-                if (onMessage != null) onMessage.accept(msg.getMessage());
+            case ERROR -> {
+                ErrorMessage err = gson.fromJson(message, ErrorMessage.class);
+                if (onMessage != null) onMessage.accept("[ERROR] " + err.getErrorMessage());
+            }
+            case NOTIFICATION -> {
+                NotificationMessage note = gson.fromJson(message, NotificationMessage.class);
+                if (onMessage != null) onMessage.accept(note.getMessage());
             }
         }
     }
+
     @OnError
     public void onError(Session session, Throwable t) {
         //System.out.println("WebSocket error: " + t.getMessage());

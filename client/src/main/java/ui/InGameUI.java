@@ -108,7 +108,6 @@ public class InGameUI {
             System.out.println("No board to highlight.");
             return;
         }
-
         ChessPiece piece = currentGame.getBoard().getPiece(pos);
         if (piece == null) {
             System.out.println("No piece at that square.");
@@ -116,16 +115,13 @@ public class InGameUI {
         }
         Set<ChessPosition> highlights = new HashSet<>();
         highlights.add(pos);
-
         for (ChessMove move : currentGame.validMoves(pos)) {
             highlights.add(move.getEndPosition());
         }
-
         clearScreen();
         boardDrawer.printBoard(currentGame, pov, highlights);
         System.out.print("[IN-GAME] >>> \n" );
     }
-
 
     private ChessMove parseMove(String input) {
         String[] parts = input.trim().toLowerCase().split("\\s+");
