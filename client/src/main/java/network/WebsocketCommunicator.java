@@ -60,12 +60,12 @@ public class WebsocketCommunicator {
     }
     @OnError
     public void onError(Session session, Throwable t) {
-        System.out.println("WebSocket error: " + t.getMessage());
+        //System.out.println("WebSocket error: " + t.getMessage());
     }
 
     @OnClose
     public void onClose(Session session, CloseReason reason) {
-        System.out.println("WebSocket closed: " + reason);
+        //System.out.println("WebSocket closed: " + reason);
     }
 
     public void send(String json) {

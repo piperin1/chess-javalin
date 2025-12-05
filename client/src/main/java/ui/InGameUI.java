@@ -5,7 +5,9 @@ import com.google.gson.Gson;
 import network.WebsocketCommunicator;
 import websocket.commands.*;
 
+import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 
 public class InGameUI {
 
@@ -17,6 +19,8 @@ public class InGameUI {
     private final int gameID;
     private final String authToken;
     private boolean running;
+    private ChessGame currentGame;
+
 
     public InGameUI(
             Scanner scanner,
@@ -45,19 +49,19 @@ public class InGameUI {
     }
 
     private void onGameUpdate(ChessGame game) {
+        this.currentGame = game;
         clearScreen();
         boardDrawer.draw(game, pov);
-        System.out.print("[IN-GAME] >>> ");
+        System.out.print("[IN-GAME] >>> \n");
     }
 
     private void clearScreen() {
-        for (int i = 0; i < 50; i++) {
-            System.out.println();
-        }
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
     }
 
     private void onNotification(String message) {
-        System.out.print("\n" + message + "\n[IN-GAME] >>> ");
+        System.out.print("\n" + message + "\n[IN-GAME] >>>\n ");
     }
 
     private void handleInput(String input) {
@@ -75,10 +79,53 @@ public class InGameUI {
                 websocket.send(gson.toJson(new LeaveCommand(authToken, gameID)));
                 running = false;
             }
+            case "redraw" -> {
+                clearScreen();
+                boardDrawer.draw(currentGame, pov);
+            }
+            case "highlight" -> {
+                try {
+                    String[] parts = input.split("\\s+");
+                    if (parts.length != 2) {
+                        System.out.println("Usage: highlight <square>");
+                        break;
+                    }
+
+                    ChessPosition pos = parsePosition(parts[1]);
+                    highlight(pos);
+                } catch (Exception e) {
+                    System.out.println("Invalid square.");
+                }
+            }
+
             case "help" -> printHelp();
             default -> System.out.println("Unknown command. Type HELP.");
         }
     }
+
+    private void highlight(ChessPosition pos) {
+        if (currentGame == null) {
+            System.out.println("No board to highlight.");
+            return;
+        }
+
+        ChessPiece piece = currentGame.getBoard().getPiece(pos);
+        if (piece == null) {
+            System.out.println("No piece at that square.");
+            return;
+        }
+        Set<ChessPosition> highlights = new HashSet<>();
+        highlights.add(pos);
+
+        for (ChessMove move : currentGame.validMoves(pos)) {
+            highlights.add(move.getEndPosition());
+        }
+
+        clearScreen();
+        boardDrawer.printBoard(currentGame, pov, highlights);
+        System.out.print("[IN-GAME] >>> \n" );
+    }
+
 
     private ChessMove parseMove(String input) {
         String[] parts = input.trim().toLowerCase().split("\\s+");
@@ -124,6 +171,8 @@ public class InGameUI {
         System.out.println("""
         Commands:
           move <from> <to> [promotion]
+          redraw
+          highlight <piece>
           resign
           leave
           help

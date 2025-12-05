@@ -1,6 +1,9 @@
 package ui;
 
 import chess.*;
+
+import java.util.Set;
+
 import static java.lang.System.out;
 import static ui.EscapeSequences.*;
 
@@ -8,24 +11,30 @@ public class BoardDrawer {
     private ChessGame game;
     private static final String LIGHT_SQUARE = SET_BG_COLOR_LIGHT_GREY;
     private static final String DARK_SQUARE = SET_BG_COLOR_MAGENTA;
+    public static final String LIGHT_HIGHLIGHT = "\u001b[48;5;153m";
+    public static final String DARK_HIGHLIGHT  = "\u001b[48;5;25m";
 
     public void draw(ChessGame game, ChessGame.TeamColor pov) {
+        System.out.println("\n");
         printBoard(game, pov, null);
     }
 
-    public void printBoard(ChessGame game, ChessGame.TeamColor color, ChessPosition selectedPos) {
+    public void printBoard(ChessGame game,
+                           ChessGame.TeamColor color,
+                           Set<ChessPosition> highlights) {
         this.game = game;
-        var sb = new StringBuilder(SET_TEXT_BOLD);
         boolean reversed = (color == ChessGame.TeamColor.BLACK);
+        var sb = new StringBuilder(SET_TEXT_BOLD);
         sb.append(printHeaderRow(reversed));
         for (int r = 8; r >= 1; r--) {
             int row = reversed ? 9 - r : r;
-            sb.append(printBoardRow(row, reversed, selectedPos));
+            sb.append(printBoardRow(row, reversed, highlights));
         }
         sb.append(printHeaderRow(reversed)).append("\n");
         sb.append(RESET_TEXT_BOLD_FAINT);
         out.println(sb);
     }
+
 
     private String printHeaderRow(boolean reversed) {
         StringBuilder sb = new StringBuilder();
@@ -40,19 +49,28 @@ public class BoardDrawer {
         return sb.toString();
     }
 
-    private String printBoardRow(int row, boolean reversed, ChessPosition selected ) {
+    private String printBoardRow(int row,
+                                 boolean reversed,
+                                 Set<ChessPosition> highlights) {
         StringBuilder sb = new StringBuilder();
-        sb.append(SET_BG_COLOR_BLACK).append(SET_TEXT_COLOR_BLUE).append(" %d ".formatted(row));
-        for (int i = 1; i <= 8; i++) {
-            int col = reversed ? 9 - i : i;
-            sb.append(getSquareColor(row, col, selected))
-                    .append(getPieceSymbol(row, col));
+        sb.append(SET_BG_COLOR_BLACK)
+                .append(SET_TEXT_COLOR_BLUE)
+                .append(" %d ".formatted(row));
+        for (int colIndex = 1; colIndex <= 8; colIndex++) {
+            int col = reversed ? 9 - colIndex : colIndex;
+            ChessPosition pos = new ChessPosition(row, col);
+            boolean highlight = highlights != null && highlights.contains(pos);
+            sb.append(getSquareColor(row, col, highlight)).append(getPieceSymbol(row, col));
         }
-        sb.append(SET_BG_COLOR_BLACK).append(SET_TEXT_COLOR_BLUE)
+        sb.append(SET_BG_COLOR_BLACK)
+                .append(SET_TEXT_COLOR_BLUE)
                 .append(" %d ".formatted(row))
-                .append(RESET_BG_COLOR).append(RESET_TEXT_COLOR).append("\n");
+                .append(RESET_BG_COLOR)
+                .append(RESET_TEXT_COLOR)
+                .append("\n");
         return sb.toString();
     }
+
 
     private String getPieceSymbol(int row, int col) {
         ChessPiece piece = game.getBoard().getPiece(new ChessPosition(row, col));
@@ -72,14 +90,12 @@ public class BoardDrawer {
         return colorCode + type;
     }
 
-    private String getSquareColor(int row, int col, ChessPosition selected) {
-        ChessPosition pos = new ChessPosition(row, col);
-        if (pos.equals(selected)) {
-            return SET_BG_COLOR_BLUE;
-        }
-        //Later add highlighted square logic here
+    private String getSquareColor(int row, int col, boolean highlighted) {
         boolean isLight = ((row + col) % 2 == 0);
-        return (isLight ? LIGHT_SQUARE : DARK_SQUARE);
+        if (highlighted) {
+            return isLight ? LIGHT_HIGHLIGHT : DARK_HIGHLIGHT;
+        }
+        return isLight ? LIGHT_SQUARE : DARK_SQUARE;
     }
 }
 

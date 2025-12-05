@@ -38,8 +38,6 @@ public class GameService {
             throw new DataAccessException("Game not found");
         }
         String username = auth.username();
-        System.out.println("Slot BLACK: '" + game.blackUsername() + "', attempting user: '" + username + "'");
-        System.out.println("Slot WHITE: '" + game.whiteUsername() + "', attempting user: '" + username + "'");
         switch (color.toUpperCase()) {
             case "BLACK":
                 if (game.blackUsername() != null && !game.blackUsername().trim().equalsIgnoreCase(username.trim())) {
