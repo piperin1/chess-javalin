@@ -1,6 +1,8 @@
 package server;
 
 import dataaccess.*;
+import io.javalin.websocket.WsCloseContext;
+import io.javalin.websocket.WsMessageContext;
 import model.*;
 import io.javalin.Javalin;
 import io.javalin.websocket.WsContext;
@@ -30,36 +32,10 @@ public class WebsocketHandler {
 
     public void register(Javalin javalin) {
         javalin.ws("/ws", ws -> {
-            ws.onMessage((ctx) -> {
-                String message = ctx.message();
-                UserGameCommand base = gson.fromJson(message, UserGameCommand.class);
-                try {
-                    switch (base.getCommandType()) {
-                        case CONNECT -> handleConnect(gson.fromJson(message, ConnectCommand.class), ctx);
-                        case MAKE_MOVE -> handleMakeMove(gson.fromJson(message, MakeMoveCommand.class), ctx);
-                        case LEAVE -> handleLeave(gson.fromJson(message, LeaveCommand.class), ctx);
-                        case RESIGN -> handleResign(gson.fromJson(message, ResignCommand.class), ctx);
-                    }
-                } catch (Exception e) {
-                    send(ctx, new ErrorMessage("Error: " + e.getMessage()));
-                } catch (UnauthorizedException e) {
-                    throw new RuntimeException(e);
-                }
-            });
 
-            ws.onClose((ctx) -> {
-                Integer gameID = sessionToGameID.remove(ctx);
-                String username = sessionToUsername.remove(ctx);
-                if (gameID != null) {
-                    Set<WsContext> sessions = gameSessions.get(gameID);
-                    if (sessions != null) {
-                        sessions.remove(ctx);
-                        if (username != null) {
-                            broadcast(gameID, new NotificationMessage(username + " disconnected"), ctx);
-                        }
-                    }
-                }
-            });
+            ws.onMessage(this::handleMessage);
+
+            ws.onClose(this::handleClose);
 
             ws.onError(ctx -> {
                 Throwable t = ctx.error();
@@ -68,6 +44,47 @@ public class WebsocketHandler {
             });
         });
     }
+
+
+    private void handleMessage(WsMessageContext ctx) {
+        String message = ctx.message();
+        UserGameCommand base = gson.fromJson(message, UserGameCommand.class);
+
+        try {
+            switch (base.getCommandType()) {
+                case CONNECT ->
+                        handleConnect(gson.fromJson(message, ConnectCommand.class), ctx);
+                case MAKE_MOVE ->
+                        handleMakeMove(gson.fromJson(message, MakeMoveCommand.class), ctx);
+                case LEAVE ->
+                        handleLeave(gson.fromJson(message, LeaveCommand.class), ctx);
+                case RESIGN ->
+                        handleResign(gson.fromJson(message, ResignCommand.class), ctx);
+            }
+        } catch (UnauthorizedException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            send(ctx, new ErrorMessage("Error: " + e.getMessage()));
+        }
+    }
+
+    private void handleClose(WsCloseContext ctx) {
+        Integer gameID = sessionToGameID.remove(ctx);
+        String username = sessionToUsername.remove(ctx);
+
+        if (gameID == null) return;
+
+        Set<WsContext> sessions = gameSessions.get(gameID);
+        if (sessions != null) {
+            sessions.remove(ctx);
+            if (username != null) {
+                broadcast(gameID,
+                        new NotificationMessage(username + " disconnected"),
+                        ctx);
+            }
+        }
+    }
+
 
     private void handleConnect(ConnectCommand command, WsContext ctx) {
         try {
