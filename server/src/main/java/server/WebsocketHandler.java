@@ -113,7 +113,9 @@ public class WebsocketHandler {
     private void handleLeave(LeaveCommand command, WsContext ctx) throws UnauthorizedException, DataAccessException {
         Integer gameID = sessionToGameID.remove(ctx);
         String username = sessionToUsername.remove(ctx);
-        if (gameID == null) return;
+        if (gameID == null) {
+            return;
+        }
         Set<WsContext> sessions = gameSessions.get(gameID);
         if (sessions != null) {
             sessions.remove(ctx);
@@ -163,8 +165,12 @@ public class WebsocketHandler {
     }
 
     private String buildJoinMessage(String username, GameData game) {
-        if (username.equals(game.whiteUsername())) return username + " joined as WHITE";
-        if (username.equals(game.blackUsername())) return username + " joined as BLACK";
+        if (username.equals(game.whiteUsername())) {
+            return username + " joined as WHITE";
+        }
+        if (username.equals(game.blackUsername())) {
+            return username + " joined as BLACK";
+        }
         return username + " is observing the game";
     }
 }

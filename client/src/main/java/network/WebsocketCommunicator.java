@@ -47,15 +47,21 @@ public class WebsocketCommunicator {
         switch (base.getServerMessageType()) {
             case LOAD_GAME -> {
                 LoadGameMessage lg = gson.fromJson(message, LoadGameMessage.class);
-                if (onGame != null) onGame.accept(lg.getGame());
+                if (onGame != null) {
+                    onGame.accept(lg.getGame());
+                }
             }
             case ERROR -> {
                 ErrorMessage err = gson.fromJson(message, ErrorMessage.class);
-                if (onMessage != null) onMessage.accept("[ERROR] " + err.getErrorMessage());
+                if (onMessage != null) {
+                    onMessage.accept("[ERROR] " + err.getErrorMessage());
+                }
             }
             case NOTIFICATION -> {
                 NotificationMessage note = gson.fromJson(message, NotificationMessage.class);
-                if (onMessage != null) onMessage.accept(note.getMessage());
+                if (onMessage != null) {
+                    onMessage.accept(note.getMessage());
+                }
             }
         }
     }
