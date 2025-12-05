@@ -72,7 +72,9 @@ public class WebsocketHandler {
         Integer gameID = sessionToGameID.remove(ctx);
         String username = sessionToUsername.remove(ctx);
 
-        if (gameID == null) return;
+        if (gameID == null) {
+            return;
+        }
 
         Set<WsContext> sessions = gameSessions.get(gameID);
         if (sessions != null) {
